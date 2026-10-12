@@ -19,7 +19,7 @@ import re
 from typing import Any
 
 from backend.mcp.errors import McpBusinessError
-from backend.mcp.schemas import Coupon, Meal, Nutrition
+from backend.mcp.schemas import Coupon, Meal, Nutrition, Store
 
 # ---------------------------------------------------------------------------
 # 基础工具
@@ -354,4 +354,49 @@ def to_nutrition(raw: dict[str, Any]) -> Nutrition:
             pick(raw, "carbohydrate_g", "carbohydrate", "carbs"), 0
         ),
         sodium_mg=_num(pick(raw, "sodium_mg", "sodium"), 0),
+    )
+
+
+def _today_hours(raw: dict[str, Any]) -> str:
+    """从 `reservationTimeOptions` 里取出**今天**的时段文本。
+
+    真实结构：
+        [{"date": "2026-10-13", "today": true,
+          "reservationOptionText": "早餐(07:14至10:15)，午餐(10:44至14:15)…"}]
+
+    只取 `today` 为真的那一项，避免把明天的时段当成今天。
+    """
+    options = raw.get("reservationTimeOptions")
+    if not isinstance(options, list):
+        return ""
+
+    for option in options:
+        if isinstance(option, dict) and option.get("today"):
+            return str(option.get("reservationOptionText") or "")
+
+    return ""
+
+
+def to_store(raw: dict[str, Any]) -> Store:
+    """门店记录。
+
+    ⚠️ `businessStatus` **只在 `searchType=2`（城市 + 关键词）时返回**。
+    收藏门店（`searchType=1`）没有这个字段，此时必须保持 `None`，
+    让前端显示「营业状态未知」而不是谎报「已打烊」。
+
+    `distance` 同理：收藏门店恒为 0，视为未知。
+    """
+    status = raw.get("businessStatus")
+    distance = _num(pick(raw, "distance"), 0)
+
+    return Store(
+        storeCode=str(pick(raw, "storeCode", "code", "id", default="")),
+        storeName=str(pick(raw, "storeName", "name", "title", default="")),
+        address=str(pick(raw, "address", "storeAddress", default="")),
+        distance=distance if distance > 0 else None,
+        businessStatus=bool(status) if isinstance(status, bool) else None,
+        businessStartTime=str(pick(raw, "businessStartTime", default="")),
+        businessEndTime=str(pick(raw, "businessEndTime", default="")),
+        hoursText=_today_hours(raw),
+        reservation=bool(raw.get("reservation") or False),
     )

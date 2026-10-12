@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend import config
-from backend.api import recommend
+from backend.api import recommend, store
 
 app = FastAPI(title=config.APP_NAME, version=config.APP_VERSION)
 
@@ -42,9 +42,10 @@ def api_info() -> dict[str, str]:
     return config.as_dict()
 
 
-# 推荐数据接口（只读）：/api/recommend/menu · /promotions · /calculate
+# 只读接口：/api/recommend/*（菜单 · 券 · 算价）与 /api/store/search（门店搜索）
 # 必须在静态目录 mount 之前注册，否则会被静态目录吞掉
 app.include_router(recommend.router)
+app.include_router(store.router)
 
 
 # ---------------------------------------------------------------------------

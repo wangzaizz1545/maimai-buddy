@@ -66,8 +66,9 @@ from backend.mcp.normalize import (
     to_coupon,
     to_meal,
     to_nutrition,
+    to_store,
 )
-from backend.mcp.schemas import CartItem, Coupon, Meal, Nutrition, PriceQuote
+from backend.mcp.schemas import CartItem, Coupon, Meal, Nutrition, PriceQuote, Store
 
 logger = logging.getLogger("mcbuddy.mcp.live")
 
@@ -277,12 +278,17 @@ class LiveProvider:
         self._cache[key] = (now, value)
         return value
 
-    def _resolve_store(self) -> tuple[str, int, int]:
-        """解析可用门店，返回 (storeCode, orderType, beType)。
+    def _resolve_store(self, store_code: str | None = None) -> tuple[str, int, int]:
+        """解析门店，返回 (storeCode, orderType, beType)。
 
-        真实 MCP 中 `query-meals` / `query-store-coupons` / `calculate-price`
-        都强制要求 storeCode，因此这是所有取数的前置步骤。
+        三种情况：
+          1. 调用方显式传入 storeCode（用户在 /store 页选了门店）→ 直接使用
+          2. 之前解析过 → 用缓存
+          3. 都没有 → 回退到收藏门店（query-nearby-stores searchType=1）
         """
+        if store_code:
+            return (str(store_code), DEFAULT_ORDER_TYPE, DEFAULT_BE_TYPE)
+
         if self._store is not None:
             return self._store
 
@@ -294,23 +300,55 @@ class LiveProvider:
         if not records:
             raise McpProtocolError("未找到可用门店（收藏餐厅为空）")
 
-        store_code = records[0].get("storeCode")
-        if not store_code:
+        resolved = records[0].get("storeCode")
+        if not resolved:
             raise McpProtocolError("门店记录缺少 storeCode")
 
-        self._store = (str(store_code), DEFAULT_ORDER_TYPE, DEFAULT_BE_TYPE)
+        self._store = (str(resolved), DEFAULT_ORDER_TYPE, DEFAULT_BE_TYPE)
         logger.info("已解析门店：%s", self._store[0])
         return self._store
 
+    # -- 门店搜索 -----------------------------------------------------------
+    def search_stores(self, city: str = "", keyword: str = "") -> list[Store]:
+        """对应 MCP `query-nearby-stores`。
+
+        真实接口的两种模式（已实测）：
+
+        | searchType | 必填参数 | 返回字段 |
+        |---|---|---|
+        | 1（收藏门店） | 无 | 无 `businessStatus` |
+        | 2（城市搜索） | **city 与 keyword 都必须给** | 含 `businessStatus` / 营业时间 |
+
+        只给其中一个会返回 `600058 城市名或者关键词不能为空`，
+        因此这里要求两者同时提供，否则回退到收藏门店。
+        """
+        if city and keyword:
+            args: dict[str, Any] = {
+                "beType": DEFAULT_BE_TYPE,
+                "searchType": 2,
+                "city": city,
+                "keyword": keyword,
+            }
+            cache_key = f"stores:{city}:{keyword}"
+        else:
+            args = {"beType": DEFAULT_BE_TYPE, "searchType": 1}
+            cache_key = "stores:favorites"
+
+        def factory() -> list[Store]:
+            payload = self._call_tool("query-nearby-stores", args)
+            return [to_store(raw) for raw in find_items(payload)]
+
+        return self._cached(cache_key, factory)
+
     # -- Provider 协议 ------------------------------------------------------
-    def get_menu(self) -> list[Meal]:
+    def get_menu(self, store_code: str | None = None) -> list[Meal]:
         """对应 MCP `query-meals`。"""
 
         def factory() -> list[Meal]:
-            store_code, order_type, be_type = self._resolve_store()
+            code, order_type, be_type = self._resolve_store(store_code)
             payload = self._call_tool(
                 "query-meals",
-                {"storeCode": store_code, "orderType": order_type, "beType": be_type},
+                {"storeCode": code, "orderType": order_type, "beType": be_type},
             )
             records = find_items(payload)
             if not records:
@@ -319,9 +357,12 @@ class LiveProvider:
             max_kcal = max_kcal_of(records)
             return [to_meal(raw, max_kcal) for raw in records]
 
+        # 指定门店时不走缓存，避免把 A 店的菜单给到 B 店
+        if store_code:
+            return factory()
         return self._cached("menu", factory)
 
-    def get_promotions(self) -> list[Coupon]:
+    def get_promotions(self, store_code: str | None = None) -> list[Coupon]:
         """对应 MCP `query-store-coupons`。
 
         **取不到就返回空列表**——真实模式下不使用演示券冒充真实券。
@@ -329,14 +370,15 @@ class LiveProvider:
         """
 
         def factory() -> list[Coupon]:
-            store_code, order_type, be_type = self._resolve_store()
+            code, order_type, be_type = self._resolve_store(store_code)
             payload = self._call_tool(
                 "query-store-coupons",
-                {"storeCode": store_code, "orderType": order_type, "beType": be_type},
+                {"storeCode": code, "orderType": order_type, "beType": be_type},
             )
-            records = find_items(payload)
-            return [to_coupon(raw) for raw in records]
+            return [to_coupon(raw) for raw in find_items(payload)]
 
+        if store_code:
+            return factory()
         return self._cached("promotions", factory)
 
     def get_nutrition(self) -> list[Nutrition]:
@@ -358,18 +400,20 @@ class LiveProvider:
 
         return self._cached("nutrition", factory)
 
-    def calculate_price(self, items: list[CartItem]) -> PriceQuote:
+    def calculate_price(
+        self, items: list[CartItem], store_code: str | None = None
+    ) -> PriceQuote:
         """对应 MCP `calculate-price` —— 权威价格来源。
 
         返回结构若无法识别会抛 `McpProtocolError` 触发降级，
         而不是自行套用本地算法冒充真实价格。
         """
-        store_code, order_type, be_type = self._resolve_store()
+        code, order_type, be_type = self._resolve_store(store_code)
 
         payload = self._call_tool(
             "calculate-price",
             {
-                "storeCode": store_code,
+                "storeCode": code,
                 "orderType": order_type,
                 "beType": be_type,
                 # 真实字段名（来自 tools/list 的 inputSchema）：

@@ -59,6 +59,55 @@ export type ProviderNutrition = {
   sodium_mg: number;
 };
 
+/**
+ * 门店，对应 MCP 的 `query-nearby-stores`。
+ *
+ * ⚠️ 真实接口有两种模式，返回字段不同：
+ *
+ * | searchType | 参数 | `businessStatus` |
+ * |---|---|---|
+ * | 1（收藏门店） | 无 | `null`（不返回该字段） |
+ * | 2（城市搜索） | city + keyword | `true` / `false` |
+ *
+ * 因此**必须区分「已打烊（false）」与「状态未知（null）」**，
+ * 不能把 null 当成打烊——那是在编造数据。
+ */
+export type ProviderStore = {
+  storeCode: string;
+  storeName: string;
+  address: string;
+  /** 距离（米）。收藏门店返回 null */
+  distance: number | null;
+  /** 营业状态。null = 该搜索方式未返回此字段 */
+  businessStatus: boolean | null;
+  businessStartTime: string;
+  businessEndTime: string;
+  /** 今日可预约时段的可读文本 */
+  hoursText: string;
+  /** 是否支持预约 */
+  reservation: boolean;
+};
+
+/** 门店搜索结果。 */
+export type StoreSearchResult = {
+  stores: ProviderStore[];
+  source: DataSource;
+  fetchedAt: string;
+  city: string;
+  keyword: string;
+  /** favorites = 收藏门店；search = 城市 + 关键词 */
+  mode: "favorites" | "search";
+};
+
+/** 用户已选中的门店。持久化到 localStorage。 */
+export type SelectedStore = {
+  storeCode: string;
+  storeName: string;
+  address: string;
+  /** 选择时的时间戳（ISO） */
+  selectedAt: string;
+};
+
 /** 一次推荐所需的完整数据上下文。 */
 export type RecommendContext = {
   meals: ProviderMeal[];
@@ -99,8 +148,19 @@ export interface RecommendDataProvider {
   readonly id: string;
   /** 面向用户的可读名称，用于数据来源提示 */
   readonly label: string;
-  /** 拉取推荐所需的菜单与优惠券 */
-  getContext(): Promise<RecommendContext>;
+  /**
+   * 拉取推荐所需的菜单与优惠券。
+   *
+   * @param storeCode 用户在 /store 页选中的门店编码。
+   *                  留空时由后端回退到收藏门店。
+   */
+  getContext(storeCode?: string): Promise<RecommendContext>;
   /** 计算价格（对应 MCP calculate-price） */
-  calculate(items: CartItem[]): Promise<PriceQuote>;
+  calculate(items: CartItem[], storeCode?: string): Promise<PriceQuote>;
+  /**
+   * 搜索门店（对应 MCP query-nearby-stores）。
+   *
+   * city 与 keyword 在真实模式下**必须同时提供**；都留空则返回收藏门店。
+   */
+  searchStores(city: string, keyword: string): Promise<StoreSearchResult>;
 }

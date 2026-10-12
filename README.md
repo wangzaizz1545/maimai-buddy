@@ -21,17 +21,18 @@
 
 ## 它是什么
 
-一个「先认识你，再记住你，最后替你拿主意」的麦门体验。走完七步，你会拿到一份
-**按自己人格算出来的今日推荐**，和一张**可截图分享的人格海报**：
+一个「先认识你，再记住你，最后替你拿主意」的麦门体验。走完八步，你会拿到一份
+**按自己人格与所选门店算出来的今日推荐**，和一张**可截图分享的人格海报**：
 
 ```
 ① 首页            →  3 秒理解这是什么
 ② 人格测试        →  6 道情景题，30 秒
 ③ AI 分析动画     →  约 2.6 秒的仪式感
 ④ 人格结果        →  六维画像 + 人格卡（截图主战场）
-⑤ 麦友今日推荐    →  按人格算出的套餐 · 券后价 · 预算建议
-⑥ 麦友档案        →  「AI 记得你的 3 件事」
-⑦ 分享卡片        →  3:4 竖版海报，一键保存 PNG
+⑤ 选择门店        →  按城市/关键词搜门店，菜单与价格都按它返回
+⑥ 麦友今日推荐    →  按人格算出的套餐 · 券后价 · 预算建议
+⑦ 麦友档案        →  「AI 记得你的 3 件事」
+⑧ 分享卡片        →  3:4 竖版海报，一键保存 PNG
 ```
 
 <p align="center">
@@ -115,12 +116,23 @@ MCP Adapter                   backend/mcp/adapter.py
 因此真实链路是「先解析门店，再查数据」：
 
 ```
-query-nearby-stores  →  storeCode（缓存 10 分钟）
-        ↓
+query-nearby-stores  →  storeCode
+        ↓               （用户在 /store 页选择，或回退到收藏门店）
         ├─ query-meals          门店可售菜单
-        ├─ query-store-coupons  可用优惠券
+        ├─ query-store-coupons  该门店可用优惠券
         └─ calculate-price      权威价格（唯一价格来源）
 ```
+
+> 门店搜索接口有个真实约束：**城市与关键词必须同时提供**（只给一个会返回 `600058`）。
+> 因此 `/store` 页要求两项都填才允许搜索，不填则展示收藏门店。
+> 另外**只有城市搜索会返回营业状态**，收藏门店不返回——所以页面上会区分
+> 「已打烊」与「状态未知」，不会把未知当成打烊。
+
+<p align="center">
+  <img src="docs/images/store.png" width="820" alt="门店选择页：搜索框、实时数据徽标、门店卡片与营业状态">
+  <br>
+  <sub>门店选择页 · 展示真实 MCP 返回的门店、地址、门店编码与营业时段</sub>
+</p>
 
 ### 降级：三层兜底，且绝不谎报
 
@@ -243,17 +255,20 @@ maimai-buddy/
 ├── scripts/launch.py          启动逻辑：建环境 → 装依赖 → 起服务 → 开浏览器
 │
 ├── frontend/                  ★ 全部业务实现都在这里
-│   ├── app/                   7 个页面（/, /personality, /analysis, /result,
-│   │                                      /recommend, /buddy, /share）
+│   ├── app/                   8 个页面（/, /personality, /analysis, /result,
+│   │                                      /store, /recommend, /buddy, /share）
 │   ├── components/            11 个组件
-│   ├── data/                  题库 · 8 型人格 · 档案 Mock · 推荐演示数据
+│   ├── data/                  题库 · 8 型人格 · 档案 Mock · 推荐演示数据 · 门店演示数据
 │   ├── lib/                   类型 · 匹配算法 · 推荐引擎 · 状态 · 主题派生
+│   │   ├── storeSelection.ts  ★ 已选门店的持久化（独立于冻结的 store.ts）
 │   │   └── provider/          ★ 数据源抽象：HTTP 优先 + Mock 兜底
 │   ├── scripts/               四个验证脚本
 │   └── out/                   静态导出产物（入库，供 FastAPI 托管）
 │
 ├── backend/
-│   ├── api/recommend.py       三个只读接口
+│   ├── api/
+│   │   ├── recommend.py       菜单 · 券 · 算价
+│   │   └── store.py           ★ 门店搜索
 │   └── mcp/                   ★ MCP Adapter
 │       ├── config.py          唯一读取 MCP 环境变量的地方
 │       ├── adapter.py         Provider 选择 + 降级 + source 标记
@@ -294,9 +309,10 @@ cd frontend && pnpm install && pnpm build
 | <http://127.0.0.1:8000> | 应用首页 |
 | <http://127.0.0.1:8000/health> | 健康检查 |
 | <http://127.0.0.1:8000/api> | 运行模式信息（含 `mcp: fixture \| live`） |
-| `/api/recommend/menu` | 推荐菜单（响应含 `source` 数据来源标记） |
-| `/api/recommend/promotions` | 优惠券 |
+| `/api/recommend/menu` | 推荐菜单（支持 `?storeCode=`，响应含 `source` 数据来源标记） |
+| `/api/recommend/promotions` | 该门店优惠券 |
 | `POST /api/recommend/calculate` | 价格计算 |
+| `/api/store/search` | 门店搜索（对应 MCP `query-nearby-stores`） |
 
 ### 验证脚本
 

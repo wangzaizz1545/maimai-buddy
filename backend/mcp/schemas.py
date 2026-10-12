@@ -55,6 +55,33 @@ class Nutrition(BaseModel):
     sodium_mg: float
 
 
+class Store(BaseModel):
+    """门店，对应 MCP `query-nearby-stores`。
+
+    真实返回中只有 `searchType=2`（城市 + 关键词）会带营业字段；
+    `searchType=1`（收藏门店）不返回 `businessStatus`，因此营业状态可为空——
+    前端必须能区分「已打烊」与「未知」，不能把未知当成打烊。
+    """
+
+    storeCode: str
+    storeName: str
+    address: str = ""
+
+    # 距离（米）。收藏门店返回 0，视为未知
+    distance: float | None = None
+
+    # 营业状态。None = 该搜索方式未返回此字段
+    businessStatus: bool | None = None
+    businessStartTime: str = ""
+    businessEndTime: str = ""
+
+    # 今日可预约时段的可读文本（真实数据的 reservationTimeOptions[today]）
+    hoursText: str = ""
+
+    # 门店是否支持预约
+    reservation: bool = False
+
+
 # ---------------------------------------------------------------------------
 # 接口响应模型
 # ---------------------------------------------------------------------------
@@ -62,6 +89,22 @@ class MenuResponse(BaseModel):
     meals: list[Meal]
     source: DataSource
     fetchedAt: str
+
+
+class StoreSearchResponse(BaseModel):
+    """门店搜索结果。
+
+    `source` 与菜单接口保持同一套语义：`mock` = 演示数据，`mcp` = 实时数据。
+    """
+
+    stores: list[Store]
+    source: DataSource
+    fetchedAt: str
+    # 回显查询条件，便于前端展示「你在搜什么」以及排查空结果
+    city: str = ""
+    keyword: str = ""
+    # 搜索方式：favorites（收藏门店）| search（城市 + 关键词）
+    mode: str = "favorites"
 
 
 class PromotionsResponse(BaseModel):

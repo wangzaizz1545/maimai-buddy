@@ -1,0 +1,114 @@
+{
+  "_source": "placeholder",
+  "_note": "门店演示数据，非真实门店。真实门店由 backend/mcp/live_provider.py 调用 MCP query-nearby-stores 获取。storeCode 刻意使用 DEMO 前缀，避免与真实门店编码混淆。门店名称带「（演示）」标识——门店与餐品不同，它带地址，用真实口吻的门店名配虚构地址会误导使用者。 另含 city 字段，仅用于演示数据的搜索过滤（真实 MCP 返回中无此字段）。",
+  "items": [
+    {
+      "storeCode": "DEMO001",
+      "storeName": "麦当劳·人民广场餐厅（演示）",
+      "address": "演示地址：黄浦区南京西路 000 号",
+      "distance": 320,
+      "businessStatus": true,
+      "businessStartTime": "07:00",
+      "businessEndTime": "23:00",
+      "reservation": true,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "早餐(07:00至10:15)，午餐(10:45至14:15)，下午茶(14:45至16:45)，夜市(17:15至21:45)"
+        }
+      ],
+      "city": "上海"
+    },
+    {
+      "storeCode": "DEMO002",
+      "storeName": "麦当劳·陆家嘴餐厅（演示）",
+      "address": "演示地址：浦东新区世纪大道 000 号",
+      "distance": 1850,
+      "businessStatus": true,
+      "businessStartTime": "06:30",
+      "businessEndTime": "23:00",
+      "reservation": false,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "早餐(06:30至10:15)，午餐(10:45至14:15)，下午茶(14:45至16:45)，夜市(17:15至22:45)"
+        }
+      ],
+      "city": "上海"
+    },
+    {
+      "storeCode": "DEMO003",
+      "storeName": "麦当劳·徐家汇餐厅（演示）",
+      "address": "演示地址：徐汇区漕溪北路 000 号",
+      "distance": 4300,
+      "businessStatus": false,
+      "businessStartTime": "07:00",
+      "businessEndTime": "22:00",
+      "reservation": true,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "早餐(07:00至10:15)，午餐(10:45至14:15)，夜市(17:15至21:45)"
+        }
+      ],
+      "city": "上海"
+    },
+    {
+      "storeCode": "DEMO004",
+      "storeName": "麦当劳·国贸餐厅（演示）",
+      "address": "演示地址：朝阳区建国门外大街 000 号",
+      "distance": 900,
+      "businessStatus": true,
+      "businessStartTime": "07:00",
+      "businessEndTime": "23:00",
+      "reservation": true,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "早餐(07:00至10:15)，午餐(10:45至14:15)，下午茶(14:45至16:45)，夜市(17:15至21:45)，宵夜(22:15至23:00)"
+        }
+      ],
+      "city": "北京"
+    },
+    {
+      "storeCode": "DEMO005",
+      "storeName": "麦当劳·中关村餐厅（演示）",
+      "address": "演示地址：海淀区中关村大街 000 号",
+      "distance": 6200,
+      "businessStatus": false,
+      "businessStartTime": "06:30",
+      "businessEndTime": "22:00",
+      "reservation": false,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "早餐(06:30至10:15)，午餐(10:45至14:15)，夜市(17:15至21:45)"
+        }
+      ],
+      "city": "北京"
+    },
+    {
+      "storeCode": "DEMO006",
+      "storeName": "麦当劳·24 小时餐厅（演示）",
+      "address": "演示地址：静安区南京西路 000 号",
+      "distance": 2400,
+      "businessStatus": true,
+      "businessStartTime": "00:00",
+      "businessEndTime": "23:59",
+      "reservation": false,
+      "reservationTimeOptions": [
+        {
+          "date": "2026-10-13",
+          "today": true,
+          "reservationOptionText": "全天营业(00:00至23:59)"
+        }
+      ],
+      "city": "上海"
+    }
+  ]
+}

@@ -182,7 +182,8 @@ export default function ResultPage() {
               variants={fadeUp}
               className="mt-12 flex flex-col items-center gap-3"
             >
-              <PrimaryButton href="/recommend/">看看今天吃什么</PrimaryButton>
+              {/* 先选门店再推荐：菜单、优惠与价格都按门店返回 */}
+              <PrimaryButton href="/store/">看看今天吃什么</PrimaryButton>
               <PrimaryButton href="/share/" variant="ghost" size="md">
                 分享我的麦门人格
               </PrimaryButton>

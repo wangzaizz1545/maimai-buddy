@@ -10,10 +10,11 @@ import { RecommendationCard } from "@/components/RecommendationCard";
 import { ScreenShell } from "@/components/ScreenShell";
 import { DEFAULT_PERSONA, getPersona } from "@/data/personas";
 import { loadRecommendContext } from "@/lib/provider";
-import type { DataSource } from "@/lib/provider";
+import type { DataSource, SelectedStore } from "@/lib/provider";
 import { budgetCeilingOf, recommend, type Recommendation } from "@/lib/recommend";
 import { deriveContext } from "@/lib/scoring";
 import { readAnswers, readPersona } from "@/lib/store";
+import { readSelectedStore } from "@/lib/storeSelection";
 import { themeOf } from "@/lib/theme";
 import type { AnswerContext, Persona } from "@/lib/types";
 
@@ -36,6 +37,8 @@ type PageState = {
   source: DataSource;
   /** 是否发生了降级（后端不可用） */
   degraded: boolean;
+  /** 用户在 /store 页选中的门店；未选择时为 null（后端用收藏门店） */
+  store: SelectedStore | null;
 };
 
 const container = {
@@ -70,8 +73,12 @@ export default function RecommendPage() {
       const answers = readAnswers();
       const context = answers ? deriveContext(answers) : null;
 
+      // 用户在 /store 页选中的门店会一路传到 MCP：
+      // 菜单、优惠券、价格都按该门店返回
+      const store = readSelectedStore();
+
       // HTTP 优先，失败自动降级（内部已处理，不会抛异常）
-      const loaded = await loadRecommendContext();
+      const loaded = await loadRecommendContext(store?.storeCode);
       if (cancelled) return;
 
       setState({
@@ -85,6 +92,7 @@ export default function RecommendPage() {
         context,
         source: loaded.context.source,
         degraded: loaded.degraded,
+        store,
       });
     })();
 
@@ -104,7 +112,7 @@ export default function RecommendPage() {
     );
   }
 
-  const { persona, recommendation, context, source, degraded } = state;
+  const { persona, recommendation, context, source, degraded, store } = state;
   const theme = themeOf(persona);
   const { pricing, budgetTip } = recommendation;
 
@@ -132,8 +140,32 @@ export default function RecommendPage() {
           ) : null}
 
           {/* 数据来源徽标：如实标注，绝不把演示数据谎报成实时数据 */}
-          <motion.div variants={fadeUp} className="mb-4 flex justify-center">
+          <motion.div variants={fadeUp} className="mb-3 flex justify-center">
             <DataSourceBadge source={source} degraded={degraded} />
+          </motion.div>
+
+          {/* 当前门店：菜单与价格都按它返回 */}
+          <motion.div
+            variants={fadeUp}
+            className="mb-4 flex flex-col items-center gap-1.5"
+          >
+            {store ? (
+              <p className="text-center text-[11px] leading-relaxed text-muted/70">
+                <span className="text-muted/50">门店 · </span>
+                {store.storeName}
+              </p>
+            ) : (
+              <p className="text-center text-[11px] text-muted/50">
+                使用收藏门店
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => router.push("/store/")}
+              className="text-[11px] text-brand-yellow/80 transition-colors hover:text-brand-yellow"
+            >
+              {store ? "更换门店" : "选择门店"}
+            </button>
           </motion.div>
 
           {/* 推荐卡 */}

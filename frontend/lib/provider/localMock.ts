@@ -12,11 +12,14 @@ import {
   type MockCoupon,
   type MockMeal,
 } from "@/data/mockRecommendation";
+import { filterMockStores } from "@/data/mockStores";
 import type {
   CartItem,
   PriceQuote,
+  ProviderStore,
   RecommendContext,
   RecommendDataProvider,
+  StoreSearchResult,
 } from "./types";
 
 /** 适用且优惠最大的券（与 backend/mcp/mock_provider.py 的 best_coupon 规则保持一致） */
@@ -28,12 +31,19 @@ function bestCoupon(total: number, coupons: MockCoupon[]): MockCoupon | null {
   );
 }
 
+/** 已选门店的展示名缓存：本地 Mock 没有按门店区分的菜单，仅用于卡片显示 */
+let lastSelected: ProviderStore | null = null;
+
 export const localMockProvider: RecommendDataProvider = {
   id: "local-mock",
   label: "本地演示数据",
 
   async getContext(): Promise<RecommendContext> {
     // MockMeal 与 ProviderMeal 结构一致，可直接赋值（TS 结构化类型）
+    //
+    // 注意：本地降级路径**不区分门店**——演示数据只有一份菜单。
+    // 用户选择的门店编码会照常发给后端，但后端不可用时拿不到门店菜单，
+    // 这是降级路径的固有边界，页面的 source 徽标会如实标注为「演示数据」。
     return {
       meals: MOCK_MEALS as MockMeal[],
       coupons: MOCK_COUPONS,
@@ -59,4 +69,24 @@ export const localMockProvider: RecommendDataProvider = {
       source: "mock",
     };
   },
+
+  async searchStores(city: string, keyword: string): Promise<StoreSearchResult> {
+    return {
+      stores: filterMockStores(city, keyword),
+      source: "mock",
+      fetchedAt: new Date().toISOString(),
+      city: city.trim(),
+      keyword: keyword.trim(),
+      mode: city.trim() && keyword.trim() ? "search" : "favorites",
+    };
+  },
 };
+
+/** 供页面在本地降级路径下展示「当前门店」（后端不可用时没有门店上下文） */
+export function rememberLocalStore(store: ProviderStore | null): void {
+  lastSelected = store;
+}
+
+export function getLocalStore(): ProviderStore | null {
+  return lastSelected;
+}

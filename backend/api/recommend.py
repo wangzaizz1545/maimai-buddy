@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from backend.mcp import adapter
 from backend.mcp.schemas import (
@@ -25,16 +25,23 @@ from backend.mcp.schemas import (
 
 router = APIRouter(prefix="/api/recommend", tags=["recommend"])
 
+# 用户可在 /store 页选择门店，选择结果通过该参数一路传到 MCP。
+# 留空时由 Live Provider 回退到收藏门店。
+StoreCodeQuery = Query(
+    None,
+    description="门店编码。来自 /api/store/search 的搜索结果；留空则使用收藏门店",
+)
+
 
 @router.get("/menu", response_model=MenuResponse, summary="推荐用菜单")
-def read_menu() -> MenuResponse:
+def read_menu(storeCode: str | None = StoreCodeQuery) -> MenuResponse:
     """对应 MCP `query-meals`。
 
-    返回当前门店可售餐品。`source` 字段用于前端诚实标注数据来源：
+    返回指定门店的可售餐品。`source` 字段用于前端诚实标注数据来源：
     `"mock"` 为演示数据，`"mcp"` 为实时数据。
     """
     return MenuResponse(
-        meals=adapter.get_menu(),
+        meals=adapter.get_menu(storeCode),
         source=adapter.current_source(),
         fetchedAt=adapter.now_iso(),
     )
@@ -43,9 +50,9 @@ def read_menu() -> MenuResponse:
 @router.get(
     "/promotions", response_model=PromotionsResponse, summary="推荐用优惠券"
 )
-def read_promotions() -> PromotionsResponse:
+def read_promotions(storeCode: str | None = StoreCodeQuery) -> PromotionsResponse:
     """对应 MCP `query-store-coupons`。"""
-    return PromotionsResponse(coupons=adapter.get_promotions())
+    return PromotionsResponse(coupons=adapter.get_promotions(storeCode))
 
 
 @router.post("/calculate", response_model=PriceQuote, summary="价格计算")

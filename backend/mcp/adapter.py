@@ -28,6 +28,7 @@ from backend.mcp.schemas import (
     Meal,
     Nutrition,
     PriceQuote,
+    Store,
 )
 
 logger = logging.getLogger("mcbuddy.mcp")
@@ -38,10 +39,13 @@ class Provider(Protocol):
 
     source: str
 
-    def get_menu(self) -> list[Meal]: ...
-    def get_promotions(self) -> list[Coupon]: ...
+    def get_menu(self, store_code: str | None = None) -> list[Meal]: ...
+    def get_promotions(self, store_code: str | None = None) -> list[Coupon]: ...
     def get_nutrition(self) -> list[Nutrition]: ...
-    def calculate_price(self, items: list[CartItem]) -> PriceQuote: ...
+    def search_stores(self, city: str = "", keyword: str = "") -> list[Store]: ...
+    def calculate_price(
+        self, items: list[CartItem], store_code: str | None = None
+    ) -> PriceQuote: ...
 
 
 # Provider 实例缓存：Live 需要复用 HTTP 会话与结果缓存，
@@ -71,7 +75,7 @@ def _mock() -> MockProvider:
     return _providers["mock"]  # type: ignore[return-value]
 
 
-def _call(method: str, *args: Any) -> Any:
+def _call(method: str, *args: Any, **kwargs: Any) -> Any:
     """调用当前 Provider；失败时降级到 Mock。
 
     降级后 `_last_source` 会被置为 "mock"，
@@ -81,7 +85,7 @@ def _call(method: str, *args: Any) -> Any:
 
     provider = get_provider()
     try:
-        result = getattr(provider, method)(*args)
+        result = getattr(provider, method)(*args, **kwargs)
         _last_source = "mcp" if provider.source == "mcp" else "mock"
         return result
     except McpError as exc:
@@ -91,34 +95,49 @@ def _call(method: str, *args: Any) -> Any:
         logger.warning("MCP 调用异常，降级到演示数据：%s", type(exc).__name__)
 
     _last_source = "mock"
-    return getattr(_mock(), method)(*args)
+    return getattr(_mock(), method)(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------
 # 取数接口（供 FastAPI 调用）
 # ---------------------------------------------------------------------------
-def get_menu() -> list[Meal]:
-    """对应 MCP `query-meals`。"""
-    return _call("get_menu")
+def get_menu(store_code: str | None = None) -> list[Meal]:
+    """对应 MCP `query-meals`。
+
+    `store_code` 由用户在 /store 页选择后传入；为 None 时由 Live Provider
+    回退到收藏门店。
+    """
+    return _call("get_menu", store_code)
 
 
-def get_promotions() -> list[Coupon]:
+def get_promotions(store_code: str | None = None) -> list[Coupon]:
     """对应 MCP `query-store-coupons`。"""
-    return _call("get_promotions")
+    return _call("get_promotions", store_code)
 
 
 def get_nutrition() -> list[Nutrition]:
     """对应 MCP `list-nutrition-foods`。
 
-    当前前端未调用此接口，但 Provider 协议保留它，
+    当前前端未直接调用此接口，但 Provider 协议保留它，
     避免将来要用营养数据时再改一次协议。
     """
     return _call("get_nutrition")
 
 
-def calculate(items: list[CartItem]) -> PriceQuote:
+def search_stores(city: str = "", keyword: str = "") -> list[Store]:
+    """对应 MCP `query-nearby-stores`。
+
+    真实模式下 city 与 keyword 需同时提供（见 live_provider.search_stores），
+    否则回退到收藏门店。Mock 模式为自由文本过滤。
+    """
+    return _call("search_stores", city, keyword)
+
+
+def calculate(
+    items: list[CartItem], store_code: str | None = None
+) -> PriceQuote:
     """对应 MCP `calculate-price` —— 权威价格来源。"""
-    return _call("calculate_price", items)
+    return _call("calculate_price", items, store_code)
 
 
 def current_source() -> DataSource:

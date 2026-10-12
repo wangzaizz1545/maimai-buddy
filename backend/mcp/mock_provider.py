@@ -15,8 +15,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from backend.mcp.normalize import derive_axes, max_kcal_of
-from backend.mcp.schemas import CartItem, Coupon, Meal, Nutrition, PriceQuote
+from backend.mcp.normalize import derive_axes, max_kcal_of, to_store
+from backend.mcp.schemas import CartItem, Coupon, Meal, Nutrition, PriceQuote, Store
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "fixtures"
 
@@ -108,6 +108,18 @@ def load_nutrition() -> tuple[Nutrition, ...]:
     )
 
 
+@lru_cache(maxsize=1)
+def load_stores() -> tuple[Store, ...]:
+    """门店演示数据。
+
+    ⚠️ 这些不是真实门店：storeCode 使用 DEMO 前缀，名称带「（演示）」标识。
+    真实门店由 `live_provider.search_stores()` 调 MCP 获取。
+    """
+    data = _load("stores.json")
+    items: list[dict[str, Any]] = data.get("items") or []
+    return tuple(to_store(raw) for raw in items)
+
+
 def best_coupon(total: float, coupons: list[Coupon]) -> Coupon | None:
     """适用且优惠最大的券。规则与前端本地兜底保持一致。"""
     usable = [c for c in coupons if total >= c.threshold]
@@ -119,17 +131,58 @@ class MockProvider:
 
     source = "mock"
 
-    def get_menu(self) -> list[Meal]:
+    def get_menu(self, store_code: str | None = None) -> list[Meal]:
+        """菜单。
+
+        `store_code` 被**刻意忽略**：演示数据只有一份菜单，没有门店维度。
+        保留该参数是为了与 Live Provider 的协议一致——否则真实模式降级时
+        会因签名不匹配而抛 TypeError。
+        """
         return list(load_meals())
 
-    def get_promotions(self) -> list[Coupon]:
+    def get_promotions(self, store_code: str | None = None) -> list[Coupon]:
+        """优惠券。同样忽略 `store_code`（演示数据无门店维度）。"""
         return list(load_coupons())
 
     def get_nutrition(self) -> list[Nutrition]:
         return list(load_nutrition())
 
-    def calculate_price(self, items: list[CartItem]) -> PriceQuote:
-        """本地算价。
+    def search_stores(self, city: str = "", keyword: str = "") -> list[Store]:
+        """门店搜索（演示版）。
+
+        真实 MCP 把 city 与 keyword 当作两个**独立的必填参数**；
+        演示数据没有真实门店，因此这里做等价语义的过滤：
+
+        - 两者都为空 → 全部门店（对应真实模式的「收藏门店」）
+        - 都提供 → `city` 精确匹配 + `keyword` 在门店名/地址中做子串匹配
+        - 只提供一个 → 只按该条件过滤
+
+        与真实接口的差别：真实接口在只给一个参数时**报错**，
+        演示数据则尽量给出结果——因为演示的目标是让页面可用，
+        而真实模式的目标是如实反映服务端约束。
+
+        过滤结果为空时**返回全部**，避免演示时出现空列表让人以为坏了。
+        """
+        items: list[dict[str, Any]] = (_load("stores.json").get("items")) or []
+        if not city and not keyword:
+            return [to_store(raw) for raw in items]
+
+        def match(raw: dict[str, Any]) -> bool:
+            if city and str(raw.get("city") or "") != city:
+                return False
+            if keyword:
+                haystack = f"{raw.get('storeName', '')}{raw.get('address', '')}"
+                if keyword not in haystack:
+                    return False
+            return True
+
+        hits = [raw for raw in items if match(raw)]
+        return [to_store(raw) for raw in (hits or items)]
+
+    def calculate_price(
+        self, items: list[CartItem], store_code: str | None = None
+    ) -> PriceQuote:
+        """本地算价。同样忽略 `store_code`。
 
         真实 MCP 下这一步由 `calculate-price` 提供，
         但 Mock 路径必须能独立完成算价，否则离线时页面不可用。

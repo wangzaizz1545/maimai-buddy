@@ -93,7 +93,7 @@ MCP Adapter   backend/mcp/adapter.py
 
 | Tool | 用途 | 在项目中的角色 |
 |---|---|---|
-| `query-nearby-stores` | 查询门店 | **链路起点**：解析 `storeCode` |
+| `query-nearby-stores` | 查询门店 | **链路起点 + 用户可见**：`/store` 页按其结果渲染门店卡片 |
 | `query-meals` | 门店可售餐品 | 菜单来源（硬约束） |
 | `list-nutrition-foods` | 营养数据 | 热量与营养维度 |
 | `query-store-coupons` | 门店可用券 | 优惠模拟数据源 |
@@ -127,10 +127,10 @@ MCP Adapter   backend/mcp/adapter.py
 ### 5.1 真实链路（先门店，后数据）
 
 ```
-① query-nearby-stores { beType:1, searchType:1 }
-        │  收藏门店列表
+① query-nearby-stores
+        │  searchType=1（收藏门店）或 searchType=2（城市 + 关键词）
         ▼
-   storeCode（例如 1450713）        ← 缓存 10 分钟
+   storeCode（例如 1450724）        ← 用户在 /store 页选择
         │
         ├─② query-meals          { storeCode, orderType:1, beType:1 }
         ├─③ query-store-coupons  { storeCode, orderType:1, beType:1 }
@@ -141,8 +141,21 @@ MCP Adapter   backend/mcp/adapter.py
 参数含义：`orderType` 1=到店 / 2=外送；`beType` 1=到店取餐 / 2=麦乐送 / 5=得来速 / 6=企业团餐。
 本项目使用 **到店自取**（`orderType=1, beType=1`）。
 
+**门店搜索的两种模式（实测差异）**
+
+| searchType | 必填参数 | 返回 `businessStatus` | 用途 |
+|---|---|---|---|
+| 1 | 无 | ❌ 不返回 | 收藏门店，作为默认值 |
+| 2 | **city 与 keyword 都必须给** | ✅ 返回 | 用户主动搜索 |
+
+只给其中一个参数会返回 `600058 城市名或者关键词不能为空`，
+因此 `/api/store/search` 在收到这种请求时直接返回 400 并说明原因。
+
 > 参数名踩坑记录：`calculate-price` 的商品字段是 **`productCode` + `quantity`**，
 > 不是 `code` + `qty`。用错会返回 `600010`。字段定义取自 `tools/list` 的 `inputSchema`。
+>
+> 另一个实测发现：门店打烊时 `calculate-price` 也会拒绝，返回
+> `60003 门店暂停营业，请重新选择门店`。所以「算价失败」不一定是我们传错了参数。
 
 ### 5.2 生命周期时序
 
