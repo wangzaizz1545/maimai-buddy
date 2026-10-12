@@ -1,0 +1,11 @@
+# McBuddy AI 后端依赖
+# 刻意保持最小集合：不含 LLM SDK、不含数据库 ORM、不含大型框架。
+# 前端静态产物由 FastAPI 以静态文件方式托管，因此无需额外的 Web 服务器。
+
+fastapi>=0.115
+uvicorn>=0.30
+python-dotenv>=1.0
+pydantic>=2.7
+
+# 调用麦当劳 MCP（Streamable HTTP）所需。仅此一个网络客户端，不引入额外网络依赖。
+httpx>=0.27

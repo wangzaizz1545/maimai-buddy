@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * McBuddy AI 设计令牌
+ *
+ * 颜色以「空格分隔的 RGB 三元组」存储，配合 Tailwind 的
+ * rgb(var(--x) / <alpha-value>) 写法，使透明度修饰符可用。
+ *
+ * 配色为品牌灵感设计，不使用麦当劳官方 Logo。
+ */
+:root {
+  /* 品牌色 */
+  --mcd-red: 218 41 28;
+  --mcd-yellow: 255 199 44;
+
+  /* 深色底与层级 */
+  --bg: 14 14 16;
+  --surface: 26 26 29;
+  --surface-2: 35 35 39;
+  --line: 255 255 255;
+
+  /* 文字 */
+  --fg: 245 245 247;
+  --muted: 161 161 166;
+
+  /* 形状 */
+  --radius-card: 24px;
+
+  /* 中文字体回退栈：拉丁字符走 Geist，中文走系统黑体 */
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+}
+
+* {
+  border-color: rgb(var(--line) / 0.08);
+}
+
+html,
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
+
+body {
+  font-family: var(--font-geist-sans), var(--font-cn), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* 防止移动端横向滚动 */
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* 玻璃拟态卡片 */
+  .glass {
+    background: rgb(var(--surface) / 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgb(var(--line) / 0.08);
+  }
+
+  /* 文字渐变（结果页大标题用） */
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* 隐藏滚动条但保留滚动能力 */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 尊重系统的「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

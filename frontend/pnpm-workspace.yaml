@@ -1,0 +1,4 @@
+# pnpm 11 默认阻止依赖执行构建脚本（安全策略）。
+# unrs-resolver 是 eslint-config-next 的传递依赖，需要执行其构建脚本。
+allowBuilds:
+  unrs-resolver: true

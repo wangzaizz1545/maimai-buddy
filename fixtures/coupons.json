@@ -1,0 +1,38 @@
+{
+  "_note": "占位数据（Phase 2）。Phase 7 将替换为真实采集并脱敏的麦当劳 MCP 快照。字段结构对齐 MCP query-store-coupons / available-coupons 的返回形态。",
+  "_source": "placeholder",
+  "items": [
+    {
+      "couponId": "CP001",
+      "name": "满30减7",
+      "type": "满减",
+      "threshold": 30,
+      "discount": 7,
+      "scope": "全场"
+    },
+    {
+      "couponId": "CP002",
+      "name": "满50减15",
+      "type": "满减",
+      "threshold": 50,
+      "discount": 15,
+      "scope": "全场"
+    },
+    {
+      "couponId": "CP003",
+      "name": "麦辣鸡腿堡第二份半价",
+      "type": "单品",
+      "threshold": 0,
+      "discount": 8.5,
+      "scope": "SP001"
+    },
+    {
+      "couponId": "CP004",
+      "name": "咖啡买一送一",
+      "type": "单品",
+      "threshold": 0,
+      "discount": 15,
+      "scope": "SP007"
+    }
+  ]
+}

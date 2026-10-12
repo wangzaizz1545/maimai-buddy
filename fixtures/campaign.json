@@ -1,0 +1,28 @@
+{
+  "_note": "占位数据（Phase 2）。Phase 7 将替换为真实采集并脱敏的麦当劳 MCP 快照。字段结构对齐 MCP campaign-calendar 的返回形态。",
+  "_source": "placeholder",
+  "month": "2026-10",
+  "items": [
+    {
+      "campaignId": "CA001",
+      "name": "麦麦省·每日领券",
+      "status": "ongoing",
+      "dateRange": "2026-10-01 ~ 2026-10-31",
+      "tags": ["优惠"]
+    },
+    {
+      "campaignId": "CA002",
+      "name": "新品限时尝鲜",
+      "status": "ongoing",
+      "dateRange": "2026-10-09 ~ 2026-10-25",
+      "tags": ["新品"]
+    },
+    {
+      "campaignId": "CA003",
+      "name": "1024 程序员节主题",
+      "status": "upcoming",
+      "dateRange": "2026-10-24 ~ 2026-10-26",
+      "tags": ["主题活动"]
+    }
+  ]
+}

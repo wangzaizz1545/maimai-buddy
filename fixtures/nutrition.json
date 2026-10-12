@@ -1,0 +1,66 @@
+{
+  "_note": "占位数据（Phase 2）。Phase 7 将替换为真实采集并脱敏的麦当劳 MCP 快照。字段结构对齐 MCP list-nutrition-foods 的返回形态。",
+  "_source": "placeholder",
+  "items": [
+    {
+      "code": "SP001",
+      "name": "麦辣鸡腿堡套餐",
+      "energy_kcal": 780,
+      "protein_g": 28,
+      "fat_g": 33,
+      "carbohydrate_g": 88,
+      "sodium_mg": 1350,
+      "calcium_mg": 180
+    },
+    {
+      "code": "SP002",
+      "name": "巨无霸套餐",
+      "energy_kcal": 920,
+      "protein_g": 36,
+      "fat_g": 42,
+      "carbohydrate_g": 95,
+      "sodium_mg": 1480,
+      "calcium_mg": 240
+    },
+    {
+      "code": "SP003",
+      "name": "双层吉士汉堡套餐",
+      "energy_kcal": 700,
+      "protein_g": 30,
+      "fat_g": 30,
+      "carbohydrate_g": 78,
+      "sodium_mg": 1200,
+      "calcium_mg": 260
+    },
+    {
+      "code": "SP004",
+      "name": "板烧鸡腿堡套餐",
+      "energy_kcal": 640,
+      "protein_g": 32,
+      "fat_g": 24,
+      "carbohydrate_g": 72,
+      "sodium_mg": 1100,
+      "calcium_mg": 150
+    },
+    {
+      "code": "SP007",
+      "name": "中杯冰美式",
+      "energy_kcal": 13,
+      "protein_g": 1,
+      "fat_g": 0,
+      "carbohydrate_g": 2,
+      "sodium_mg": 10,
+      "calcium_mg": 8
+    },
+    {
+      "code": "SP009",
+      "name": "原味甜筒",
+      "energy_kcal": 200,
+      "protein_g": 5,
+      "fat_g": 6,
+      "carbohydrate_g": 32,
+      "sodium_mg": 90,
+      "calcium_mg": 140
+    }
+  ]
+}
