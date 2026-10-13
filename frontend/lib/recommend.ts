@@ -65,6 +65,14 @@ const AXIS_DIMENSION: Record<string, DimensionKey> = {
   social: "social",
 };
 
+// 快乐值合成权重：口味 + 分量占大头，省了钱额外加分
+const HAPPINESS_WEIGHTS = { taste: 0.4, filling: 0.4, saved: 0.2 } as const;
+
+// 预算外更优提示的差价上限（元）：超过则不值得向低预算用户推销
+const UPGRADE_HINT_MAX_GAP = 15;
+// 凑单建议的缺口上限（元）：差得太多就不提示凑单
+const TOPUP_MAX_GAP = 15;
+
 export type AxisScore = {
   key: string;
   label: string;
@@ -271,7 +279,7 @@ function buildBudgetTip(
 ): string {
   const { gapToNext, nextCoupon: next, toppingUpWorthIt } = pricing;
 
-  if (next && gapToNext > 0 && gapToNext <= 15) {
+  if (next && gapToNext > 0 && gapToNext <= TOPUP_MAX_GAP) {
     const netGain = next.discount - gapToNext;
     if (toppingUpWorthIt) {
       return `再点 ¥${gapToNext} 就能用「${next.name}」，券比多花的钱多 ¥${netGain} —— 值得凑。`;
@@ -377,7 +385,7 @@ export function recommend(
   );
   const differs = unconstrained.items[0].code !== main.code;
   // 只在差价合理时提示，避免对低预算用户推销远超预算的选项
-  const withinReach = unconstrainedTotal <= ceiling + 15;
+  const withinReach = unconstrainedTotal <= ceiling + UPGRADE_HINT_MAX_GAP;
 
   const upgradeHint =
     differs && withinReach && unconstrained.score > best.score + 0.01
@@ -400,9 +408,9 @@ export function recommend(
 
   const axisFit = (key: string) => best.axes.find((a) => a.key === key)?.fit ?? 0;
   const happiness = Math.round(
-    (axisFit("taste") * 0.4 +
-      axisFit("filling") * 0.4 +
-      (saved > 0 ? 1 : 0) * 0.2) *
+    (axisFit("taste") * HAPPINESS_WEIGHTS.taste +
+      axisFit("filling") * HAPPINESS_WEIGHTS.filling +
+      (saved > 0 ? 1 : 0) * HAPPINESS_WEIGHTS.saved) *
       100
   );
 

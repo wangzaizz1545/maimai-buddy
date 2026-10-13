@@ -62,6 +62,17 @@ export default function PersonalityPage() {
   const question = QUESTIONS[index];
   const isLast = index === QUESTIONS.length - 1;
 
+  // 切题后把焦点移到新题标题，避免键盘用户丢失焦点从头 Tab
+  useEffect(() => {
+    // 等 AnimatePresence 的入场动画挂载新 DOM 后再聚焦
+    const id = setTimeout(() => {
+      document
+        .getElementById(`question-title-${question.id}`)
+        ?.focus();
+    }, 320);
+    return () => clearTimeout(id);
+  }, [index, question.id]);
+
   function handleSelect(optionId: string) {
     if (pending) return;
 

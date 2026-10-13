@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -19,6 +20,11 @@ export const metadata: Metadata = {
     "一个会记住你的 AI 麦当劳搭子。基于麦当劳官方 MCP，先做麦门人格测试，再让 AI 记住你的口味与状态。",
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0e0e10",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </body>
     </html>
   );

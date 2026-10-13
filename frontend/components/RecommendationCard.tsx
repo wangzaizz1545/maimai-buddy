@@ -62,8 +62,8 @@ export function RecommendationCard({ persona, recommendation, animated = true }:
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
           {items.map((item) => (
             <li key={item.code}>
-              {item.name} <span className="text-muted/60">¥{item.price}</span>
-              <span className="ml-1 text-muted/40">{item.kcal} kcal</span>
+              {item.name} <span className="text-muted/70">¥{item.price}</span>
+              <span className="ml-1 text-muted/60">{item.kcal} kcal</span>
             </li>
           ))}
         </ul>
@@ -80,9 +80,9 @@ export function RecommendationCard({ persona, recommendation, animated = true }:
           <dt className="text-muted">
             优惠
             {pricing.coupon ? (
-              <span className="ml-2 text-xs text-muted/60">{pricing.coupon.name}</span>
+              <span className="ml-2 text-xs text-muted/70">{pricing.coupon.name}</span>
             ) : (
-              <span className="ml-2 text-xs text-muted/50">暂无可用券</span>
+              <span className="ml-2 text-xs text-muted/60">暂无可用券</span>
             )}
           </dt>
           <dd className="tabular-nums text-brand-yellow">

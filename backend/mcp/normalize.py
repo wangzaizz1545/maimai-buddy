@@ -307,6 +307,20 @@ def max_kcal_of(raw_items: list[dict[str, Any]]) -> int:
 # ---------------------------------------------------------------------------
 # 记录 → schema
 # ---------------------------------------------------------------------------
+def _axis_value(raw: dict[str, Any], key: str, fallback: float) -> float:
+    """读取匹配轴，缺失或为 null 时回退到推导值。
+
+    真实 MCP 返回 JSON `null` 很常见，直接用 `float(raw.get(...))`
+    会在 `float(None)` 处抛 TypeError，进而被上层整体降级到 Mock——
+    那意味着真实数据只要有一条记录带 null 字段，整批菜单都不可用。
+    这里做宽松解析，让单条异常记录只回退到推导值而不拖垮整批。
+    """
+    value = raw.get(key)
+    if value is None:
+        return fallback
+    return _num(value, fallback)
+
+
 def to_meal(raw: dict[str, Any], max_kcal: int) -> Meal:
     axes = derive_axes(raw, max_kcal)
 
@@ -317,11 +331,11 @@ def to_meal(raw: dict[str, Any], max_kcal: int) -> Meal:
         kcal=int(_num(pick(raw, "kcal", "energy", "energyKcal", "calorie"), 0)),
         category=normalize_category(raw),
         tags=_normalize_tags(pick(raw, "tags", "labels", "tagList", default=[])),
-        spice=float(raw.get("spice", axes["spice"])),
-        sweet=float(raw.get("sweet", axes["sweet"])),
-        caffeine=float(raw.get("caffeine", axes["caffeine"])),
-        filling=float(raw.get("filling", axes["filling"])),
-        shareable=float(raw.get("shareable", axes["shareable"])),
+        spice=_axis_value(raw, "spice", axes["spice"]),
+        sweet=_axis_value(raw, "sweet", axes["sweet"]),
+        caffeine=_axis_value(raw, "caffeine", axes["caffeine"]),
+        filling=_axis_value(raw, "filling", axes["filling"]),
+        shareable=_axis_value(raw, "shareable", axes["shareable"]),
     )
 
 
@@ -377,6 +391,30 @@ def _today_hours(raw: dict[str, Any]) -> str:
     return ""
 
 
+_TRUE_VALUES = {"1", "true", "open", "营业中", "营业"}
+_FALSE_VALUES = {"0", "false", "closed", "打烊", "休息"}
+
+
+def _parse_business_status(status: Any) -> bool | None:
+    """把外部返回的营业状态归一化为 bool 或 None。
+
+    真实 MCP 可能返回 Python bool、数字 1/0，或字符串
+    "1"/"0"/"true"/"false"/"open"/"closed" 等，若只识别 bool
+    会让字符串/数字真值被静默丢弃，前端永远显示「营业状态未知」。
+    """
+    if isinstance(status, bool):
+        return status
+    if isinstance(status, (int, float)):
+        return status == 1
+    if isinstance(status, str):
+        s = status.strip().lower()
+        if s in _TRUE_VALUES:
+            return True
+        if s in _FALSE_VALUES:
+            return False
+    return None
+
+
 def to_store(raw: dict[str, Any]) -> Store:
     """门店记录。
 
@@ -393,8 +431,9 @@ def to_store(raw: dict[str, Any]) -> Store:
         storeCode=str(pick(raw, "storeCode", "code", "id", default="")),
         storeName=str(pick(raw, "storeName", "name", "title", default="")),
         address=str(pick(raw, "address", "storeAddress", default="")),
+        city=str(pick(raw, "city", "cityName", default="")),
         distance=distance if distance > 0 else None,
-        businessStatus=bool(status) if isinstance(status, bool) else None,
+        businessStatus=_parse_business_status(status),
         businessStartTime=str(pick(raw, "businessStartTime", default="")),
         businessEndTime=str(pick(raw, "businessEndTime", default="")),
         hoursText=_today_hours(raw),

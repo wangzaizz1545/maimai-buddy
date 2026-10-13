@@ -31,6 +31,9 @@
   /* 中文字体回退栈：拉丁字符走 Geist，中文走系统黑体 */
   --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+
+  /* 告知浏览器本应用为深色主题，让原生表单控件、滚动条等以深色渲染 */
+  color-scheme: dark;
 }
 
 * {

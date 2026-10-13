@@ -18,7 +18,7 @@ const VARIANTS = {
   primary:
     "bg-brand-red text-white shadow-lg shadow-brand-red/25 hover:brightness-110",
   ghost:
-    "border border-white/12 bg-white/5 text-foreground hover:bg-white/10",
+    "border border-white/[0.12] bg-white/5 text-foreground hover:bg-white/10",
 } as const;
 
 const SIZES = {

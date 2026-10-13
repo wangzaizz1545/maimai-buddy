@@ -78,7 +78,7 @@ export function BuddyProfile({ profile, persona, animated = true }: Props) {
         <InfoTile label="口味">
           <span className="text-sm leading-none">
             <span className="text-brand-yellow">{"★".repeat(filled)}</span>
-            <span className="text-muted/25">{"☆".repeat(5 - filled)}</span>
+            <span className="text-muted/40">{"☆".repeat(5 - filled)}</span>
           </span>
           <span className="mt-1.5 block text-xs text-muted">
             {profile.taste.label}

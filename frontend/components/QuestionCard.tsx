@@ -60,7 +60,11 @@ export function QuestionCard({
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-yellow/60 to-transparent"
       />
 
-      <h2 className="text-balance text-[1.65rem] font-bold leading-snug sm:text-3xl">
+      <h2
+        id={`question-title-${question.id}`}
+        tabIndex={-1}
+        className="text-balance text-[1.65rem] font-bold leading-snug outline-none sm:text-3xl"
+      >
         {question.title}
       </h2>
 
@@ -72,6 +76,8 @@ export function QuestionCard({
         variants={listVariants}
         initial="hidden"
         animate="show"
+        role="group"
+        aria-labelledby={`question-title-${question.id}`}
         className={`mt-6 grid gap-3 ${gridClass}`}
       >
         {question.options.map((option) => {

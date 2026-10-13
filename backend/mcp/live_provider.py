@@ -44,7 +44,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -90,6 +92,10 @@ REQUEST_TIMEOUT = 10.0
 
 # 结果缓存：避免触及 600 次/分钟的限流上限
 CACHE_TTL_SECONDS = 600
+# 门店解析缓存的 TTL（门店可能打烊/更换收藏，不能永久缓存）
+STORE_TTL_SECONDS = 600
+# 缓存条目上限：city/keyword 由用户输入拼接，不设上限会被海量组合撑爆内存
+CACHE_MAX_ENTRIES = 256
 
 # 到店自取：orderType=1（到店），beType=1（到店取餐）
 DEFAULT_ORDER_TYPE = 1
@@ -248,7 +254,9 @@ class LiveProvider:
     def __init__(self) -> None:
         self._client: McpHttpClient | None = None
         self._cache: dict[str, tuple[float, Any]] = {}
+        self._cache_lock = threading.Lock()
         self._store: tuple[str, int, int] | None = None
+        self._store_at: float = 0.0
 
     # -- 内部 ---------------------------------------------------------------
     def _get_client(self) -> McpHttpClient:
@@ -268,14 +276,26 @@ class LiveProvider:
         return ensure_success(payload, name)
 
     def _cached(self, key: str, factory):
-        """带 TTL 的缓存，降低调用频率。仅在成功时写入。"""
+        """带 TTL 与上限的缓存，降低调用频率。仅在成功时写入。
+
+        用锁避免缓存击穿：多个线程同时 miss 同一个 key 时，
+        只有第一个线程真正调用真实 MCP，其余等待复用结果——
+        否则并发请求会放大触发 600 次/分钟限流的风险。
+        """
         now = time.monotonic()
-        hit = self._cache.get(key)
-        if hit and now - hit[0] < CACHE_TTL_SECONDS:
-            return hit[1]
+        with self._cache_lock:
+            hit = self._cache.get(key)
+            if hit and now - hit[0] < CACHE_TTL_SECONDS:
+                return hit[1]
 
         value = factory()
-        self._cache[key] = (now, value)
+
+        with self._cache_lock:
+            # 淘汰最早写入的条目，防止用户输入撑爆内存
+            if len(self._cache) >= CACHE_MAX_ENTRIES:
+                oldest = min(self._cache, key=lambda k: self._cache[k][0])
+                self._cache.pop(oldest, None)
+            self._cache[key] = (time.monotonic(), value)
         return value
 
     def _resolve_store(self, store_code: str | None = None) -> tuple[str, int, int]:
@@ -283,13 +303,16 @@ class LiveProvider:
 
         三种情况：
           1. 调用方显式传入 storeCode（用户在 /store 页选了门店）→ 直接使用
-          2. 之前解析过 → 用缓存
+          2. 之前解析过且未过期 → 用缓存
           3. 都没有 → 回退到收藏门店（query-nearby-stores searchType=1）
+
+        缓存带 TTL：门店可能打烊或更换收藏，不能永久缓存。
         """
         if store_code:
             return (str(store_code), DEFAULT_ORDER_TYPE, DEFAULT_BE_TYPE)
 
-        if self._store is not None:
+        now = time.monotonic()
+        if self._store is not None and now - self._store_at < STORE_TTL_SECONDS:
             return self._store
 
         payload = self._call_tool(
@@ -305,6 +328,7 @@ class LiveProvider:
             raise McpProtocolError("门店记录缺少 storeCode")
 
         self._store = (str(resolved), DEFAULT_ORDER_TYPE, DEFAULT_BE_TYPE)
+        self._store_at = now
         logger.info("已解析门店：%s", self._store[0])
         return self._store
 
@@ -322,6 +346,11 @@ class LiveProvider:
         只给其中一个会返回 `600058 城市名或者关键词不能为空`，
         因此这里要求两者同时提供，否则回退到收藏门店。
         """
+        # 限制输入长度：city/keyword 会拼接进缓存键，超长输入不仅无意义
+        # 还会制造海量缓存条目（配合 _cached 的上限双重防护）。
+        city = city.strip()[:32]
+        keyword = keyword.strip()[:64]
+
         if city and keyword:
             args: dict[str, Any] = {
                 "beType": DEFAULT_BE_TYPE,
@@ -451,4 +480,5 @@ class LiveProvider:
                 saved if saved is not None else max(0.0, original - payable), 2
             ),
             source="mcp",
+            fetchedAt=datetime.now(timezone.utc).isoformat(),
         )

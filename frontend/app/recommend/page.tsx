@@ -150,12 +150,12 @@ export default function RecommendPage() {
             className="mb-4 flex flex-col items-center gap-1.5"
           >
             {store ? (
-              <p className="text-center text-[11px] leading-relaxed text-muted/70">
-                <span className="text-muted/50">门店 · </span>
+              <p className="text-center text-[11px] leading-relaxed text-muted/80">
+                <span className="text-muted/60">门店 · </span>
                 {store.storeName}
               </p>
             ) : (
-              <p className="text-center text-[11px] text-muted/50">
+              <p className="text-center text-[11px] text-muted/60">
                 使用收藏门店
               </p>
             )}
@@ -264,7 +264,7 @@ export default function RecommendPage() {
           {/* 数据来源说明 */}
           <motion.p
             variants={fadeUp}
-            className="mt-8 text-center text-[11px] leading-relaxed text-muted/50"
+            className="mt-8 text-center text-[11px] leading-relaxed text-muted/60"
           >
             {source === "mcp"
               ? "数据来自麦当劳 MCP 实时接口"
@@ -308,7 +308,7 @@ function DataSourceBadge({
       </span>
 
       {degraded && !isLive ? (
-        <span className="text-[10px] text-muted/50">
+        <span className="text-[11px] text-muted/60">
           后端不可用或门店未营业，已自动降级
         </span>
       ) : null}

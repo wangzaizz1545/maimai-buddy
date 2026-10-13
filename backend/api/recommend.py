@@ -51,8 +51,15 @@ def read_menu(storeCode: str | None = StoreCodeQuery) -> MenuResponse:
     "/promotions", response_model=PromotionsResponse, summary="推荐用优惠券"
 )
 def read_promotions(storeCode: str | None = StoreCodeQuery) -> PromotionsResponse:
-    """对应 MCP `query-store-coupons`。"""
-    return PromotionsResponse(coupons=adapter.get_promotions(storeCode))
+    """对应 MCP `query-store-coupons`。
+
+    与菜单接口一致，返回 `source` 让前端如实标注优惠券数据来源。
+    """
+    return PromotionsResponse(
+        coupons=adapter.get_promotions(storeCode),
+        source=adapter.current_source(),
+        fetchedAt=adapter.now_iso(),
+    )
 
 
 @router.post("/calculate", response_model=PriceQuote, summary="价格计算")

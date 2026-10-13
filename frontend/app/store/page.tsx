@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GradientBackground } from "@/components/GradientBackground";
 import { ScreenShell } from "@/components/ScreenShell";
@@ -53,8 +53,12 @@ export default function StorePage() {
 
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
+  // 请求序号：防止快速连点搜索时，前一次慢请求的返回覆盖后一次结果
+  const searchSeq = useRef(0);
+
   const runSearch = useCallback(
     async (nextCity: string, nextKeyword: string) => {
+      const seq = ++searchSeq.current;
       setStatus("loading");
       setNotice("");
 
@@ -62,6 +66,9 @@ export default function StorePage() {
         nextCity,
         nextKeyword
       );
+
+      // 已有更新的请求发出，丢弃本次过期结果
+      if (seq !== searchSeq.current) return;
 
       setStores(result.stores);
       setSource(result.source);
@@ -115,29 +122,37 @@ export default function StorePage() {
 
           {/* 搜索区 */}
           <motion.section variants={fadeUp} className="glass rounded-[28px] p-5">
-            <div className="flex flex-col gap-2.5">
+            <form
+              className="flex flex-col gap-2.5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (canSearch) void runSearch(city, keyword);
+              }}
+            >
+              <label className="sr-only" htmlFor="store-city">
+                城市
+              </label>
               <input
+                id="store-city"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="城市（例如：上海）"
-                className="w-full rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-brand-yellow/50 focus:outline-none"
-                aria-label="城市"
+                className="w-full rounded-2xl border border-white/[0.12] bg-white/[0.04] px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-brand-yellow/50 focus:outline-none"
               />
+              <label className="sr-only" htmlFor="store-keyword">
+                关键词
+              </label>
               <input
+                id="store-keyword"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && canSearch) void runSearch(city, keyword);
-                }}
                 placeholder="关键词（商圈 / 地标 / 路名）"
-                className="w-full rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-brand-yellow/50 focus:outline-none"
-                aria-label="关键词"
+                className="w-full rounded-2xl border border-white/[0.12] bg-white/[0.04] px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-brand-yellow/50 focus:outline-none"
               />
 
               <button
-                type="button"
+                type="submit"
                 disabled={!canSearch || status === "loading"}
-                onClick={() => void runSearch(city, keyword)}
                 className={[
                   "mt-0.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
                   canSearch
@@ -148,12 +163,12 @@ export default function StorePage() {
                 {status === "loading" ? "搜索中…" : "搜索门店"}
               </button>
 
-              <p className="text-center text-[10px] leading-relaxed text-muted/45">
-                麦当劳 MCP 的搜索要求<b className="text-muted/70">城市与关键词同时填写</b>
+              <p className="text-center text-[11px] leading-relaxed text-muted/60">
+                麦当劳 MCP 的搜索要求<b className="text-muted/80">城市与关键词同时填写</b>
                 <br />
                 不填则显示你的收藏门店
               </p>
-            </div>
+            </form>
           </motion.section>
 
           {/* 数据来源徽标 */}
@@ -287,7 +302,7 @@ function StoreCard({
         </p>
       ) : null}
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted/60">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted/70">
         <span className="tabular-nums">
           门店编码 <span className="text-muted">{store.storeCode}</span>
         </span>
@@ -297,7 +312,7 @@ function StoreCard({
       </div>
 
       {store.hoursText ? (
-        <p className="mt-2 border-t border-white/8 pt-2 text-[10px] leading-relaxed text-muted/45">
+        <p className="mt-2 border-t border-white/[0.08] pt-2 text-[11px] leading-relaxed text-muted/60">
           {store.hoursText}
         </p>
       ) : null}

@@ -67,6 +67,9 @@ class Store(BaseModel):
     storeName: str
     address: str = ""
 
+    # 所在城市。仅演示数据（fixtures）提供，真实 MCP 返回中无此字段
+    city: str = ""
+
     # 距离（米）。收藏门店返回 0，视为未知
     distance: float | None = None
 
@@ -108,16 +111,26 @@ class StoreSearchResponse(BaseModel):
 
 
 class PromotionsResponse(BaseModel):
+    """优惠券响应。
+
+    与 `MenuResponse` / `StoreSearchResponse` 保持同一套 `source` 语义，
+    让前端能如实标注优惠券来自演示还是实时数据。
+    """
+
     coupons: list[Coupon]
+    source: DataSource
+    fetchedAt: str
 
 
 class CartItem(BaseModel):
     code: str
-    qty: int = 1
+    # 数量下限 1、上限 99：qty=0 或负数会算出 0/负价格，
+    # 超大整数会构造异常请求打向真实 MCP。
+    qty: int = Field(1, ge=1, le=99)
 
 
 class CalculateRequest(BaseModel):
-    items: list[CartItem]
+    items: list[CartItem] = Field(min_length=1)
 
 
 class PriceQuote(BaseModel):
@@ -128,3 +141,4 @@ class PriceQuote(BaseModel):
     payable: float
     saved: float
     source: DataSource
+    fetchedAt: str

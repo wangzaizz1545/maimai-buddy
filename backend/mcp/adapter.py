@@ -14,6 +14,8 @@
 from __future__ import annotations
 
 import logging
+import threading
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from typing import Any, Protocol
 
@@ -50,43 +52,57 @@ class Provider(Protocol):
 
 # Provider 实例缓存：Live 需要复用 HTTP 会话与结果缓存，
 # 每次请求都新建实例会导致反复握手并放大触发限流的风险。
+# 用锁保护初始化，避免多个线程同时判空各自创建实例（check-then-act 竞态）。
 _providers: dict[str, Provider] = {}
+_providers_lock = threading.Lock()
 
-# 最近一次实际生效的数据来源。由 _call 更新，供 API 层如实标注。
-_last_source: DataSource = "mock"
+# 最近一次实际生效的数据来源。
+#
+# 用 ContextVar 而非全局变量：FastAPI 同步端点跑在线程池里，
+# 若用全局变量，请求 A 的 source 可能被并发请求 B 覆盖，
+# 违背「如实标注数据来源」的核心设计。ContextVar 按请求上下文隔离。
+_last_source: ContextVar[DataSource] = ContextVar("last_source", default="mock")
+
+
+def _get_or_create(key: str, factory) -> Provider:
+    """双重检查锁：先无锁快路径，未命中再加锁创建。"""
+    provider = _providers.get(key)
+    if provider is not None:
+        return provider
+    with _providers_lock:
+        provider = _providers.get(key)
+        if provider is None:
+            provider = factory()
+            _providers[key] = provider
+        return provider
 
 
 def get_provider() -> Provider:
     """按配置返回 Provider（带实例缓存）。"""
     if mcp_config.get_mcp_mode() == "live":
-        if "live" not in _providers:
-            _providers["live"] = LiveProvider()
+        provider = _get_or_create("live", LiveProvider)
+        if not hasattr(provider, "_logged"):
+            provider._logged = True  # type: ignore[attr-defined]
             logger.info("MCP 模式：live（%s）", mcp_config.describe())
-        return _providers["live"]
+        return provider
 
-    if "mock" not in _providers:
-        _providers["mock"] = MockProvider()
-    return _providers["mock"]
+    return _get_or_create("mock", MockProvider)
 
 
 def _mock() -> MockProvider:
-    if "mock" not in _providers:
-        _providers["mock"] = MockProvider()
-    return _providers["mock"]  # type: ignore[return-value]
+    return _get_or_create("mock", MockProvider)  # type: ignore[return-value]
 
 
 def _call(method: str, *args: Any, **kwargs: Any) -> Any:
     """调用当前 Provider；失败时降级到 Mock。
 
-    降级后 `_last_source` 会被置为 "mock"，
+    降级后当前请求上下文的 `_last_source` 会被置为 "mock"，
     因此 API 层永远不会把演示数据谎报成实时数据。
     """
-    global _last_source
-
     provider = get_provider()
     try:
         result = getattr(provider, method)(*args, **kwargs)
-        _last_source = "mcp" if provider.source == "mcp" else "mock"
+        _last_source.set("mcp" if provider.source == "mcp" else "mock")
         return result
     except McpError as exc:
         # 异常消息由 live_provider 保证不含 Token
@@ -94,7 +110,7 @@ def _call(method: str, *args: Any, **kwargs: Any) -> Any:
     except Exception as exc:  # noqa: BLE001 - 任何异常都不应打断页面
         logger.warning("MCP 调用异常，降级到演示数据：%s", type(exc).__name__)
 
-    _last_source = "mock"
+    _last_source.set("mock")
     return getattr(_mock(), method)(*args, **kwargs)
 
 
@@ -142,7 +158,7 @@ def calculate(
 
 def current_source() -> DataSource:
     """本次实际生效的数据来源（降级后为 "mock"）。"""
-    return _last_source
+    return _last_source.get()
 
 
 def now_iso() -> str:

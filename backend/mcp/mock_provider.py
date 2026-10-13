@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,17 @@ from backend.mcp.normalize import derive_axes, max_kcal_of, to_store
 from backend.mcp.schemas import CartItem, Coupon, Meal, Nutrition, PriceQuote, Store
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "fixtures"
+
+
+def _axis_value(raw: dict[str, Any], key: str, fallback: float) -> float:
+    """读取匹配轴，缺失或为 null 时回退到推导值（fixtures 字段可能缺省）。"""
+    value = raw.get(key)
+    if value is None:
+        return fallback
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return fallback
 
 
 def _load(name: str) -> dict[str, Any]:
@@ -56,11 +68,11 @@ def load_meals() -> tuple[Meal, ...]:
                 category=str(raw.get("category", "")),
                 tags=list(raw.get("tags") or []),
                 # fixtures 显式标注优先，缺失时用推导值
-                spice=float(raw.get("spice", axes["spice"])),
-                sweet=float(raw.get("sweet", axes["sweet"])),
-                caffeine=float(raw.get("caffeine", axes["caffeine"])),
-                filling=float(raw.get("filling", axes["filling"])),
-                shareable=float(raw.get("shareable", axes["shareable"])),
+                spice=_axis_value(raw, "spice", axes["spice"]),
+                sweet=_axis_value(raw, "sweet", axes["sweet"]),
+                caffeine=_axis_value(raw, "caffeine", axes["caffeine"]),
+                filling=_axis_value(raw, "filling", axes["filling"]),
+                shareable=_axis_value(raw, "shareable", axes["shareable"]),
             )
         )
 
@@ -163,21 +175,21 @@ class MockProvider:
 
         过滤结果为空时**返回全部**，避免演示时出现空列表让人以为坏了。
         """
-        items: list[dict[str, Any]] = (_load("stores.json").get("items")) or []
+        stores = list(load_stores())
         if not city and not keyword:
-            return [to_store(raw) for raw in items]
+            return stores
 
-        def match(raw: dict[str, Any]) -> bool:
-            if city and str(raw.get("city") or "") != city:
+        def match(store: Store) -> bool:
+            if city and store.city != city:
                 return False
             if keyword:
-                haystack = f"{raw.get('storeName', '')}{raw.get('address', '')}"
+                haystack = f"{store.storeName}{store.address}"
                 if keyword not in haystack:
                     return False
             return True
 
-        hits = [raw for raw in items if match(raw)]
-        return [to_store(raw) for raw in (hits or items)]
+        hits = [store for store in stores if match(store)]
+        return hits or stores
 
     def calculate_price(
         self, items: list[CartItem], store_code: str | None = None
@@ -202,4 +214,5 @@ class MockProvider:
             payable=round(max(0.0, original - saved), 2),
             saved=round(saved, 2),
             source="mock",
+            fetchedAt=datetime.now(timezone.utc).isoformat(),
         )

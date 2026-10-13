@@ -31,7 +31,10 @@ export function AnalysisAnimation({ onComplete }: Props) {
 
   // 用 ref 持有回调，避免父组件重渲染导致计时器被重置
   const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -61,6 +64,7 @@ export function AnalysisAnimation({ onComplete }: Props) {
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.span
+          aria-hidden
           className="relative text-5xl"
           animate={{ scale: [1, 1.08, 1] }}
           transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}

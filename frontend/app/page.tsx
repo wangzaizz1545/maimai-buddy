@@ -62,7 +62,9 @@ export default function Home() {
               aria-hidden
               className="absolute inset-0 -z-10 rounded-full bg-brand-red/40 blur-3xl"
             />
-            <span className="block text-6xl sm:text-7xl">🍔</span>
+            <span aria-hidden className="block text-6xl sm:text-7xl">
+              🍔
+            </span>
           </motion.div>
 
           {/* 主标题 */}

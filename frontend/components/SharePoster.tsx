@@ -141,7 +141,7 @@ export function SharePoster({
         </div>
 
         {/* 落款 */}
-        <div className="mt-4 flex items-end justify-between border-t border-white/12 pt-3.5">
+        <div className="mt-4 flex items-end justify-between border-t border-white/[0.12] pt-3.5">
           <div>
             <p className="text-[13px] font-semibold text-white">McBuddy AI</p>
             <p className="mt-0.5 text-[9px] text-white/45">
