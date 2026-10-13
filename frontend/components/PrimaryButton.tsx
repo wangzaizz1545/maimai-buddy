@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
 
 const VARIANTS = {
   primary:
-    "bg-brand-red text-white shadow-lg shadow-brand-red/25 hover:brightness-110",
+    "bg-gradient-to-br from-brand-red to-[#c41e13] text-white shadow-lg shadow-brand-red/30 hover:brightness-110 border border-white/15",
   ghost:
     "border border-white/[0.12] bg-white/5 text-foreground hover:bg-white/10",
 } as const;
@@ -52,6 +52,7 @@ export function PrimaryButton({
     "transition duration-200 active:scale-[0.98]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:opacity-40",
+    "shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
     VARIANTS[variant],
     SIZES[size],
     className,

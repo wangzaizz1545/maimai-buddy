@@ -53,12 +53,7 @@ export function QuestionCard({
       : "grid-cols-1 sm:grid-cols-2";
 
   return (
-    <div className="glass relative overflow-hidden rounded-[28px] p-5 sm:p-8">
-      {/* 顶部渐变高光 */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-yellow/60 to-transparent"
-      />
+    <div className="glass-3d highlight-top relative overflow-hidden rounded-card p-5 sm:p-8">
 
       <h2
         id={`question-title-${question.id}`}

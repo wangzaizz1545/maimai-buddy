@@ -34,6 +34,15 @@ export function GradientBackground({
           opacity: intensity * 0.75,
         }}
       />
+      {/* 左下第三光晕：品牌橙，增强「拟物层次」的纵深与暖意 */}
+      <div
+        className="absolute bottom-[-14rem] left-[-12rem] h-[26rem] w-[26rem] animate-breathe rounded-full blur-[120px] [animation-delay:4s]"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,138,61,0.5) 0%, transparent 70%)",
+          opacity: intensity * 0.45,
+        }}
+      />
     </div>
   );
 }

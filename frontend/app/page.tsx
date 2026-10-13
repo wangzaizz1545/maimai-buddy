@@ -56,44 +56,76 @@ export default function Home() {
           animate="show"
           className="flex flex-col items-center text-center"
         >
-          {/* 品牌图标 */}
-          <motion.div variants={fadeUp} className="relative">
+          {/* 状态徽章 */}
+          <motion.div variants={fadeUp}>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-muted">
+              <span
+                aria-hidden
+                className={`h-1.5 w-1.5 rounded-full ${
+                  runtime ? "bg-success" : "bg-muted/40"
+                }`}
+              />
+              演示模式 · 零 Token · 零 API Key
+            </span>
+          </motion.div>
+
+          {/* 品牌图标（渐变底 + 拟物内阴影） */}
+          <motion.div variants={fadeUp} className="relative mt-6">
             <span
               aria-hidden
               className="absolute inset-0 -z-10 rounded-full bg-brand-red/40 blur-3xl"
             />
-            <span aria-hidden className="block text-6xl sm:text-7xl">
+            <span
+              aria-hidden
+              className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-brand-red to-brand-yellow text-5xl shadow-lg shadow-brand-red/30 [box-shadow:inset_0_-3px_0_rgba(0,0,0,0.15)]"
+            >
               🍔
             </span>
           </motion.div>
 
-          {/* 主标题 */}
+          {/* 主标题（渐变强调） */}
           <motion.h1
             variants={fadeUp}
             className="mt-6 text-[2.75rem] font-bold leading-none tracking-tight sm:text-6xl"
           >
-            McBuddy AI
+            McBuddy <span className="text-gradient-brand">AI</span>
           </motion.h1>
 
           {/* 副标题 */}
           <motion.p
             variants={fadeUp}
-            className="mt-4 text-lg text-muted sm:text-xl"
+            className="mt-4 text-balance text-lg text-muted sm:text-xl"
           >
-            你的 AI 麦当劳搭子。
+            会认识你、也会记住你的
+            <br className="sm:hidden" />
+            麦当劳 AI 搭子。
           </motion.p>
 
-          {/* 辅助文案：产品的核心承诺 */}
+          {/* 三步引导叙事卡 */}
           <motion.div
             variants={fadeUp}
-            className="glass mt-8 w-full max-w-sm rounded-card px-6 py-5"
+            className="glass-3d highlight-top mt-8 w-full max-w-sm rounded-card px-6 py-5 text-left"
           >
-            <p className="text-base leading-relaxed">
-              第一次见面，<span className="text-brand-yellow">它认识你</span>。
+            <p className="text-[10px] font-semibold tracking-[0.22em] text-brand-yellow/80">
+              HOW IT WORKS
             </p>
-            <p className="mt-1.5 text-base leading-relaxed">
-              以后，<span className="text-brand-yellow">它记得你</span>。
-            </p>
+            <ol className="mt-3 space-y-2.5">
+              {[
+                <>先做麦门人格测试，<span className="text-brand-yellow">认识你</span></>,
+                <>AI 记住口味与状态，<span className="text-brand-yellow">记得你</span></>,
+                <>每次点单，都更懂你</>,
+              ].map((step, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-yellow/15 text-[11px] font-semibold text-brand-yellow"
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="text-sm leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ol>
           </motion.div>
 
           {/* 主行动点 */}
@@ -129,21 +161,12 @@ export default function Home() {
             </ul>
           </motion.div>
 
-          {/* 页脚：合规声明 + 模式指示 */}
+          {/* 页脚：合规声明 */}
           <motion.footer
             variants={fadeUp}
-            className="mt-16 space-y-1.5 text-xs text-muted/60"
+            className="mt-16 text-xs text-muted/60"
           >
             <p>非麦当劳官方产品 · 参赛作品</p>
-            <p className="flex items-center justify-center gap-1.5">
-              <span
-                aria-hidden
-                className={`h-1.5 w-1.5 rounded-full ${
-                  runtime ? "bg-emerald-400" : "bg-muted/40"
-                }`}
-              />
-              演示模式 · 零 Token · 零 API Key
-            </p>
           </motion.footer>
         </motion.div>
       </ScreenShell>

@@ -121,7 +121,7 @@ export default function StorePage() {
           </motion.p>
 
           {/* 搜索区 */}
-          <motion.section variants={fadeUp} className="glass rounded-[28px] p-5">
+          <motion.section variants={fadeUp} className="glass-3d rounded-card p-5">
             <form
               className="flex flex-col gap-2.5"
               onSubmit={(e) => {
@@ -154,9 +154,10 @@ export default function StorePage() {
                 type="submit"
                 disabled={!canSearch || status === "loading"}
                 className={[
-                  "mt-0.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
+                  "mt-0.5 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200",
+                  "active:scale-[0.98]",
                   canSearch
-                    ? "bg-brand-yellow text-black hover:bg-brand-yellow/90"
+                    ? "bg-gradient-to-r from-brand-yellow to-brand-orange text-black shadow-lg shadow-brand-yellow/20 hover:brightness-105 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.4)]"
                     : "cursor-not-allowed bg-white/[0.06] text-muted/50",
                 ].join(" ")}
               >

@@ -46,7 +46,7 @@ export function BuddyProfile({ profile, persona, animated = true }: Props) {
       {/* 人格 */}
       <motion.section
         variants={fadeUp}
-        className="glass relative overflow-hidden rounded-[28px] p-6"
+        className="glass-3d relative overflow-hidden rounded-card p-6"
       >
         <span
           aria-hidden
@@ -99,7 +99,7 @@ export function BuddyProfile({ profile, persona, animated = true }: Props) {
       {/* AI 记得你的 3 件事 */}
       <motion.section
         variants={fadeUp}
-        className="glass rounded-[28px] p-6"
+        className="glass-3d rounded-card p-6"
       >
         <p className="text-[10px] font-semibold tracking-[0.22em] text-muted">
           AI 记得你的 {profile.memories.length} 件事

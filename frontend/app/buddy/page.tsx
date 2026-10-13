@@ -66,7 +66,7 @@ export default function BuddyPage() {
 
         {/* 未测试时的提示 */}
         {!state.hasResult ? (
-          <div className="glass mb-4 rounded-2xl px-5 py-4 text-center text-xs text-muted">
+          <div className="glass-3d mb-4 rounded-2xl px-5 py-4 text-center text-xs text-muted">
             你还没有做过测试，下面是示例档案。
           </div>
         ) : null}

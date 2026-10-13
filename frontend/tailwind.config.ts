@@ -23,9 +23,11 @@ const config: Config = {
         surface2: "rgb(var(--surface-2) / <alpha-value>)",
         muted: "rgb(var(--muted) / <alpha-value>)",
         line: "rgb(var(--line) / <alpha-value>)",
+        success: "rgb(var(--success) / <alpha-value>)",
         brand: {
           red: "rgb(var(--mcd-red) / <alpha-value>)",
           yellow: "rgb(var(--mcd-yellow) / <alpha-value>)",
+          orange: "rgb(var(--mcd-orange) / <alpha-value>)",
         },
       },
       borderRadius: {

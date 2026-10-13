@@ -29,7 +29,7 @@ export function StepDots({
             className={[
               "h-1.5 rounded-full transition-all duration-300",
               i === current
-                ? "w-6 bg-brand-yellow"
+                ? "w-6 bg-gradient-to-r from-brand-yellow to-brand-orange"
                 : i < current
                   ? "w-1.5 bg-brand-yellow/50"
                   : "w-1.5 bg-white/15",

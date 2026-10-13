@@ -43,7 +43,7 @@ export function RecommendationCard({ persona, recommendation, animated = true }:
       variants={container}
       initial={animated ? "hidden" : false}
       animate="show"
-      className="glass relative overflow-hidden rounded-[28px] p-6"
+      className="glass-3d relative overflow-hidden rounded-card p-6"
     >
       <span
         aria-hidden

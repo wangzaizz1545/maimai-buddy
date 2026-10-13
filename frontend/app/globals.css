@@ -14,6 +14,8 @@
   /* 品牌色 */
   --mcd-red: 218 41 28;
   --mcd-yellow: 255 199 44;
+  /* 品牌橙（红黄之间的过渡强调色，用于渐变标题/CTA） */
+  --mcd-orange: 255 138 61;
 
   /* 深色底与层级 */
   --bg: 14 14 16;
@@ -25,8 +27,15 @@
   --fg: 245 245 247;
   --muted: 161 161 166;
 
-  /* 形状 */
-  --radius-card: 24px;
+  /* 语义色（成功态等，此前散落在组件里用 tailwind 默认色硬编码） */
+  --success: 34 197 94;
+
+  /* 形状：完整圆角梯度，替代孤立的 --radius-card */
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-card: 28px;
+  --radius-pill: 9999px;
 
   /* 中文字体回退栈：拉丁字符走 Geist，中文走系统黑体 */
   --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
@@ -58,7 +67,7 @@ body {
     text-wrap: balance;
   }
 
-  /* 玻璃拟态卡片 */
+  /* 玻璃拟态卡片（基础层） */
   .glass {
     background: rgb(var(--surface) / 0.72);
     backdrop-filter: blur(16px);
@@ -66,11 +75,45 @@ body {
     border: 1px solid rgb(var(--line) / 0.08);
   }
 
-  /* 文字渐变（结果页大标题用） */
+  /* 拟物玻璃卡（深度重构层）：更高模糊 + 内高光 + 深度阴影 */
+  .glass-3d {
+    background: rgb(var(--surface) / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgb(var(--line) / 0.1);
+    box-shadow:
+      0 20px 40px -16px rgb(0 0 0 / 0.45),
+      inset 0 1px 0 rgb(var(--line) / 0.06);
+  }
+
+  /* 渐变文字（品牌红→橙→黄），用于标题强调 */
   .text-gradient {
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+  .text-gradient-brand {
+    background-image: linear-gradient(90deg, #ffc72c 0%, #ff8a3d 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* 顶部渐变高光描边：卡片顶部一条品牌色渐变细线 */
+  .highlight-top {
+    position: relative;
+  }
+  .highlight-top::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--mcd-yellow) / 0.6),
+      transparent
+    );
   }
 
   /* 隐藏滚动条但保留滚动能力 */
@@ -81,6 +124,12 @@ body {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* 全局焦点环：所有可聚焦元素在键盘导航时都有清晰可见的品牌黄焦点 */
+:focus-visible {
+  outline: 2px solid rgb(var(--mcd-yellow));
+  outline-offset: 2px;
 }
 
 /* 尊重系统的「减少动态效果」设置 */

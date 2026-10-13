@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>McBuddy AI · UI 重组三档样本对比</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: rgba(26,26,29,0.72);
+    --line: rgba(255,255,255,0.08);
+    --fg: #f5f5f7;
+    --muted: #a1a1a6;
+    --red: #da291c;
+    --yellow: #ffc72c;
+    --radius-card: 24px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #08080a;
+    color: var(--fg);
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 24px 64px;
+  }
+  .page-head { max-width: 1200px; margin: 0 auto 32px; }
+  .page-head h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+  .page-head p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.7; }
+  .badge {
+    display: inline-block; font-size: 12px; padding: 3px 10px;
+    border-radius: 999px; margin-left: 8px; vertical-align: middle;
+    background: rgba(255,199,44,0.14); color: var(--yellow);
+    border: 1px solid rgba(255,199,44,0.28);
+  }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel { border-radius: 20px; border: 1px solid var(--line); overflow: hidden; background: #101012; }
+  .panel-label {
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    background: #131316;
+  }
+  .panel-label .tier { font-size: 13px; font-weight: 600; }
+  .panel-label .scope { font-size: 12px; color: var(--muted); }
+  .phone {
+    aspect-ratio: 9 / 16; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  .note {
+    padding: 12px 18px; font-size: 12px; line-height: 1.7;
+    color: var(--muted); border-top: 1px solid var(--line); background: #0c0c0e;
+  }
+  .note b { color: var(--fg); font-weight: 600; }
+
+  /* 三个样本各自的手机屏幕内容 */
+  .screen { width: 100%; height: 100%; padding: 32px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+
+  /* ---- Tier 1 轻量打磨：保持现状，仅统一 token ---- */
+  .t1 .glow { position: absolute; width: 320px; height: 320px; border-radius: 50%; top: -80px; left: 50%; transform: translateX(-50%); background: radial-gradient(circle, rgba(218,41,28,0.35), transparent 70%); filter: blur(60px); }
+  .t1 .icon { font-size: 44px; line-height: 1; }
+  .t1 h2 { font-size: 34px; font-weight: 700; margin: 18px 0 0; letter-spacing: -0.5px; }
+  .t1 .sub { font-size: 15px; color: var(--muted); margin: 12px 0 0; }
+  .t1 .card { margin-top: 28px; width: 100%; max-width: 300px; padding: 18px 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); backdrop-filter: blur(16px); font-size: 14px; line-height: 1.7; }
+  .t1 .card .hl { color: var(--yellow); }
+  .t1 .btn { margin-top: 28px; padding: 14px 36px; border-radius: 999px; background: var(--red); color: #fff; font-size: 15px; font-weight: 600; box-shadow: 0 8px 24px rgba(218,41,28,0.35); }
+
+  /* ---- Tier 2 中等升级：统一层级 + 节奏 ---- */
+  .t2 .glow { position: absolute; width: 340px; height: 340px; border-radius: 50%; top: -70px; left: 50%; transform: translateX(-50%); background: radial-gradient(circle, rgba(218,41,28,0.32), transparent 68%); filter: blur(64px); }
+  .t2 .glow2 { position: absolute; width: 260px; height: 260px; border-radius: 50%; bottom: -60px; right: -60px; background: radial-gradient(circle, rgba(255,199,44,0.22), transparent 70%); filter: blur(56px); }
+  .t2 .icon { width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, rgba(218,41,28,0.9), rgba(255,199,44,0.9)); display: flex; align-items: center; justify-content: center; font-size: 36px; line-height: 1; box-shadow: 0 12px 32px rgba(218,41,28,0.35); }
+  .t2 .eyebrow { margin-top: 20px; font-size: 11px; letter-spacing: 2px; color: var(--yellow); font-weight: 600; }
+  .t2 h2 { font-size: 36px; font-weight: 700; margin: 8px 0 0; letter-spacing: -0.5px; }
+  .t2 .sub { font-size: 15px; color: var(--muted); margin: 10px 0 0; }
+  .t2 .card { margin-top: 26px; width: 100%; max-width: 300px; padding: 16px 20px; border-radius: 18px; background: rgba(26,26,29,0.6); border: 1px solid var(--line); backdrop-filter: blur(16px); display: flex; flex-direction: column; gap: 6px; }
+  .t2 .card .row { font-size: 14px; line-height: 1.6; text-align: left; display: flex; align-items: center; gap: 8px; }
+  .t2 .card .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); flex: none; }
+  .t2 .card .hl { color: var(--yellow); }
+  .t2 .btn { margin-top: 28px; padding: 14px 40px; border-radius: 999px; background: var(--red); color: #fff; font-size: 15px; font-weight: 600; box-shadow: 0 8px 24px rgba(218,41,28,0.35); position: relative; }
+  .t2 .btn::after { content: ""; position: absolute; inset: 0; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); }
+
+  /* ---- Tier 3 深度重构：更强叙事 + 拟物层次 ---- */
+  .t3 { background: radial-gradient(120% 80% at 50% -10%, #1a1210 0%, #0e0e10 55%); }
+  .t3 .glow { position: absolute; width: 360px; height: 360px; border-radius: 50%; top: -80px; left: 50%; transform: translateX(-50%); background: radial-gradient(circle, rgba(218,41,28,0.4), transparent 66%); filter: blur(70px); }
+  .t3 .glow2 { position: absolute; width: 300px; height: 300px; border-radius: 50%; bottom: -70px; left: -80px; background: radial-gradient(circle, rgba(255,199,44,0.26), transparent 70%); filter: blur(60px); }
+  .t3 .hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .t3 .hero-badge .live { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+  .t3 .icon { width: 88px; height: 88px; border-radius: 26px; background: linear-gradient(135deg, #da291c, #ffc72c); display: flex; align-items: center; justify-content: center; font-size: 44px; line-height: 1; box-shadow: 0 16px 40px rgba(218,41,28,0.4), inset 0 -3px 0 rgba(0,0,0,0.15); margin-top: 24px; }
+  .t3 h2 { font-size: 38px; font-weight: 800; margin: 22px 0 0; letter-spacing: -1px; line-height: 1.1; }
+  .t3 h2 .grad { background: linear-gradient(90deg, #ffc72c, #ff8a3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .t3 .sub { font-size: 15px; color: var(--muted); margin: 12px 0 0; }
+  .t3 .card { margin-top: 26px; width: 100%; max-width: 300px; padding: 20px; border-radius: 22px; background: rgba(26,26,29,0.55); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06); }
+  .t3 .card .step { font-size: 11px; color: var(--yellow); font-weight: 600; letter-spacing: 1px; margin-bottom: 10px; }
+  .t3 .card .row { font-size: 14px; line-height: 1.65; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .t3 .card .row:last-child { margin-bottom: 0; }
+  .t3 .card .n { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,199,44,0.15); color: var(--yellow); font-size: 11px; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px; }
+  .t3 .card .hl { color: var(--yellow); font-weight: 600; }
+  .t3 .btn { margin-top: 28px; padding: 16px 44px; border-radius: 999px; background: linear-gradient(135deg, #da291c, #c41e13); color: #fff; font-size: 15px; font-weight: 700; box-shadow: 0 12px 32px rgba(218,41,28,0.4), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .t3 .hint { margin-top: 20px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <h1>McBuddy AI · UI 重组三档样本<span class="badge">首页 Hero 样本</span></h1>
+    <p>三档方案都在现有深色品牌语言（麦当劳红黄 + 玻璃拟态）基础上推进，区别在于<b>改动深度与精致度</b>。选择一档后，我会把该档的设计规范落地到全部页面。</p>
+  </div>
+
+  <div class="grid">
+    <!-- Tier 1 轻量打磨 -->
+    <div class="panel">
+      <div class="panel-label"><span class="tier">轻量打磨</span><span class="scope">仅统一 token，不动布局</span></div>
+      <div class="phone t1">
+        <div class="screen">
+          <div class="glow"></div>
+          <div class="icon">🍔</div>
+          <h2>McBuddy AI</h2>
+          <div class="sub">你的 AI 麦当劳搭子。</div>
+          <div class="card">
+            第一次见面，<span class="hl">它认识你</span>。<br>
+            以后，<span class="hl">它记得你</span>。
+          </div>
+          <div class="btn">开始麦门人格测试</div>
+        </div>
+      </div>
+      <div class="note"><b>改动范围：</b>补全语义色 token（primary/destructive/success）、统一圆角梯度（md/lg/card）、全局 focus-visible 焦点环、统一动效时长。页面布局与视觉几乎不变，风险最低。</div>
+    </div>
+
+    <!-- Tier 2 中等升级 -->
+    <div class="panel">
+      <div class="panel-label"><span class="tier">中等升级</span><span class="scope">统一层级 + 节奏</span></div>
+      <div class="phone t2">
+        <div class="screen">
+          <div class="glow"></div>
+          <div class="glow2"></div>
+          <div class="icon">🍔</div>
+          <div class="eyebrow">AI COMPANION</div>
+          <h2>McBuddy AI</h2>
+          <div class="sub">你的 AI 麦当劳搭子。</div>
+          <div class="card">
+            <div class="row"><span class="dot"></span>第一次见面，<span class="hl">它认识你</span></div>
+            <div class="row"><span class="dot"></span>以后，<span class="hl">它记得你</span></div>
+          </div>
+          <div class="btn">开始麦门人格测试</div>
+        </div>
+      </div>
+      <div class="note"><b>改动范围：</b>在轻量基础上，统一卡片层次（品牌渐变图标、eyebrow 小标签、列表式承诺文案、按钮描边高光），让各页面观感更一致、更有质感。布局结构不变，视觉精致度提升。</div>
+    </div>
+
+    <!-- Tier 3 深度重构 -->
+    <div class="panel">
+      <div class="panel-label"><span class="tier">深度重构</span><span class="scope">更强叙事 + 拟物层次</span></div>
+      <div class="phone t3">
+        <div class="screen">
+          <div class="glow"></div>
+          <div class="glow2"></div>
+          <div class="hero-badge"><span class="live"></span> 演示模式 · 零 Token</div>
+          <div class="icon">🍔</div>
+          <h2>McBuddy <span class="grad">AI</span></h2>
+          <div class="sub">会认识你、也会记住你的<br>麦当劳 AI 搭子。</div>
+          <div class="card">
+            <div class="step">HOW IT WORKS</div>
+            <div class="row"><span class="n">1</span>先做麦门人格测试，<span class="hl">认识你</span></div>
+            <div class="row"><span class="n">2</span>AI 记住口味与状态，<span class="hl">记得你</span></div>
+            <div class="row"><span class="n">3</span>每次点单都更懂你</div>
+          </div>
+          <div class="btn">开始麦门人格测试</div>
+          <div class="hint">8 种麦门人格，你是哪一种</div>
+        </div>
+      </div>
+      <div class="note"><b>改动范围：</b>重新组织首页叙事（状态徽章 → 品牌图标 → 渐变标题 → 三步引导卡 → CTA），加入拟物层次（内阴影、渐变描边、双光晕）。视觉冲击最强，但改动大，需逐页验证。</div>
+    </div>
+  </div>
+</body>
+</html>

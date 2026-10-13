@@ -177,7 +177,7 @@ export default function RecommendPage() {
           </motion.div>
 
           {/* 预算建议 */}
-          <motion.section variants={fadeUp} className="glass mt-4 rounded-[28px] p-6">
+          <motion.section variants={fadeUp} className="glass-3d mt-4 rounded-card p-6">
             <p className="text-[10px] font-semibold tracking-[0.22em] text-muted">
               预算建议
             </p>
@@ -193,7 +193,7 @@ export default function RecommendPage() {
           </motion.section>
 
           {/* 优惠模拟 */}
-          <motion.section variants={fadeUp} className="glass mt-4 rounded-[28px] p-6">
+          <motion.section variants={fadeUp} className="glass-3d mt-4 rounded-card p-6">
             <p className="text-[10px] font-semibold tracking-[0.22em] text-muted">
               优惠模拟
             </p>
